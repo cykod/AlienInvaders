@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>Alien Invaders</title>
+  <link rel='Stylesheet' href='style.css'  type='text/css'/>
+  <script src='http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js'></script>
+  <script src='js/game.js'></script>
+
+  <style>
+    #gameboard { background-color:black; }
+
+  </style>
+
+</head>
+<body>
+
+<canvas id='gameboard' width='500' height='500'></canvas>
+<script>
+  $(function() {
+    Game.initialize("#gameboard",function() { 
+      Game.play(
+      [[0,0,0,0,0,0,0,0,0,0,0],
+       [0,0,0,0,0,0,0,0,0,0,0],
+       [0,0,0,0,0,0,0,0,0,0,0],
+       [0,0,0,0,0,0,0,0,0,0,0],
+       [0,0,0,0,0,0,0,0,0,0,0],
+       [0,0,1,1,1,1,1,1,1,1,0],
+       [0,0,1,1,1,1,1,1,1,1,0],
+       [0,0,1,1,1,1,1,1,1,1,0],
+       [0,0,1,1,1,1,1,1,1,1,0],
+       [0,0,1,1,1,1,1,1,1,1,0],
+       [0,0,1,1,1,1,1,1,1,1,0]]
+      ); 
+     
+     });
+  });
+</script>
+</body>
+</html>
