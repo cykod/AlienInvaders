@@ -1,18 +1,10 @@
-var Util = {
-  clamp: function(v,min,max) { v > min ? ( v < max ? v : max ) : min }
-};
-
-
 var Game = new function() {
-  var canvas,canvasElem;
   var KEY_CODES = { 37:'left', 39:'right', 32 :'fire' };
- 
   this.keys = {};
 
-
   this.initialize = function(canvas_dom,callback) {
-    canvas_elem = $(canvas_dom)[0];
-    canvas = canvas_elem.getContext('2d');
+    this.canvas_elem = $(canvas_dom)[0];
+    this.canvas = canvas_elem.getContext('2d');
 
     this.width = $(canvas_elem).attr('width');
     this.height= $(canvas_elem).attr('height');
@@ -25,62 +17,47 @@ var Game = new function() {
       if(KEY_CODES[event.keyCode]) Game.keys[KEY_CODES[event.keyCode]] = false;
     });
 
-    this.board = new GameBoard(canvas);
     Sprites.load(callback);
   }
 
-  this.play = function(level) {
-    Game.board.loadLevel(level);
-    setTimeout(Game.loop,30);
-  }
+  this.loadBoard = function(board) { this.board = board; }
 
   this.loop = function() { 
     Game.board.step(30/1000); 
-    Game.board.render();
+    Game.board.render(Game.canvas);
     setTimeout(Game.loop,30);
   }
-
 };
 
-var Sprites = new function() {
-  this.map = { 'alien0': { sx: 0,  sy: 0,  w: 23, h: 18 },
-               'alien1': { sx: 23, sy: 0,  w: 23, h: 18 },
-               'player': { sx: 0,  sy: 18 ,w: 26, h: 17 },
-               'missle': { sx: 0,  sy: 68, w: 2,  h: 17 } };
-
-  this.load = function(callback) { 
-    this.image = new Image();
-    this.image.onload = callback;
-    this.image.src = 'images/sprites.png';
+var GameScreen = function(text,callback) {
+  this.step = function(dt) {
+    if(Game.keys['fire'] && callback) callback();
   }
 
-  this.draw = function(canvas,sprite,x,y) {
-    var s = this.map[sprite];
-    canvas.drawImage(this.image, s.sx, s.sy, s.w, s.h, x,y, s.w, s.h);
+  this.render = function(canvas) {
+    canvas.clearRect(0,0,Game.width,Game.height);
+    canvas.font = "bold 50px arial";
+    var measure = canvas.measureText(text);  
+    canvas.fillStyle = "#FFFFFF";
+    canvas.fillText(text,Game.width/2 - measure.width/2,Game.height/2);
   }
 }
 
-
-var GameBoard = function(canvas) {
-  this.objects = [];
+var GameBoard = function(level) {
   this.removed_objs = [];
   this.missles = 0;
-
+  var board = this;
 
   this.loadLevel = function(level) {
     this.objects = [];
+    this.player = this.addSprite('player', Game.width/2, Game.height - Sprites.map['player'].h - 10);
     var flock = this.add(new AlienFlock());
     for(var y=0,rows=level.length;y<rows;y++) {
       for(var x=0,cols=level[y].length;x<cols;x++) {
-        if(level[y][x]) this.add(new Alien((Sprites.map['alien0'].w+10)*x, Sprites.map['alien0'].h*y, flock));
+        if(level[y][x]) this.addSprite('alien0',(Sprites.map['alien0'].w+10)*x, Sprites.map['alien0'].h*y, { flock: flock });
       }
     }
-
-    this.player = this.add(new Player(Game.width/2, Game.height - Sprites.map['player'].h - 10));
   }
-
-  this.add =    function(obj) { obj.board=this; this.objects.push(obj); return obj; }
-  this.remove = function(obj) { this.removed_objs.push(obj); }
 
   this.iterate = function(func) {
      for(var i=0,len=this.objects.length;i<len;i++) {
@@ -95,43 +72,47 @@ var GameBoard = function(canvas) {
     return false;
   }
 
-
   this.step = function(dt) { 
     this.removed_objs = [];
-    var board = this;
-    this.iterate(function() { if(!this.step(dt)) board.removed_objs.push(this); }); 
+    this.iterate(function() { 
+        if(!this.step(dt)) this.die();
+    }); 
+
     for(var i=0,len=this.removed_objs.length;i<len;i++) {
       var idx = this.objects.indexOf(this.removed_objs[i]);
-      this.removed_objs[i].board = null;
       if(idx != -1) this.objects.splice(idx,1);
     }
   };
 
-  this.render = function() {
+  this.render = function(canvas) {
     canvas.clearRect(0,0,Game.width,Game.height);
     this.iterate(function() { this.draw(canvas); });
   }
 
   this.collision = function(o1,o2) {
-    return !((o1.y<o2.y-o2.h) || (o1.y> o2.y+o2.h) || (o1.x<o2.x-o2.w) || (o1.x>o2.x+o2.w));
+    return !((o1.y+o1.h-1<o2.y) || (o1.y> o2.y+o2.h-1) || (o1.x+o1.w-1<o2.x) || (o1.x>o2.x+o2.w-1));
   };
 
   this.collide = function(obj) {
-    var board = this;
     return this.detect(function() {
       if(obj != this && !this.invulnrable)
        return board.collision(obj,this) ? this : false;
     });
   }
 
-  this.addSprite = function(name,x,y,cls,opts) {
-    var sprite = new cls(opts);
+
+  this.add =    function(obj) { obj.board=this; this.objects.push(obj); return obj; }
+  this.remove = function(obj) { this.removed_objs.push(obj); }
+
+  this.addSprite = function(name,x,y,opts) {
+    var sprite = this.add(new Sprites.map[name].cls(opts));
     sprite.x = x; sprite.y = y;
-    sprite.w = Sprites.map[name].w;
-    sprite.w = Sprites.map[name].h;
+    sprite.w = Sprites.map[name].w; 
+    sprite.h = Sprites.map[name].h;
     return sprite;
   }
  
+  this.loadLevel(level);
 }
 
 var AlienFlock = function() {
@@ -153,8 +134,8 @@ var AlienFlock = function() {
 
     var max = {};
     this.board.iterate(function() {
-      if(this instanceof Alien) { if(!max[this.x] || this.y > max[this.x]) max[this.x] = this.y; }
-
+      if(this instanceof Alien) 
+        if(!max[this.x] || this.y > max[this.x]) max[this.x] = this.y; 
     });
     this.max_y = max;
     return true;
@@ -163,7 +144,7 @@ var AlienFlock = function() {
 }
 
 var Alien = function(opts) {
-  this.flock = opts['flock';
+  this.flock = opts['flock'];
   this.frame = 0;
   this.mx = 0;
 }
@@ -183,24 +164,23 @@ Alien.prototype.step = function(dt) {
   this.y += this.flock.dy;
   if(Math.abs(this.mx) > 10) {
     if(this.y == this.flock.max_y[this.x]) {
-      if(Math.random()*100 < 10) {
-        this.board.add(new Missle(this.x + this.w/2 - Sprites.map.missle.w/2,
-        this.y+this.h,
-        100));
-
-      }
+      this.fireSometimes();
     }
-
-
     this.x += this.mx;
     this.mx = 0;
     this.frame = (this.frame+1) % 2;
     if(this.x > 450) this.flock.hit = -1;
     if(this.x < 10) this.flock.hit = 1;
-
-    
   }
-   return true;
+  return true;
+}
+
+Alien.prototype.fireSometimes = function() {
+      if(Math.random()*100 < 10) {
+        this.board.addSprite('missle',this.x + this.w/2 - Sprites.map.missle.w/2,
+                                      this.y + this.h, 
+                                     { dy: 100 });
+      }
 }
 
 var Player = function(opts) { 
@@ -209,31 +189,36 @@ var Player = function(opts) {
 
 Player.prototype.draw = function(canvas) {
    Sprites.draw(canvas,'player',this.x,this.y);
-
 }
 
 Player.prototype.step = function(dt) {
   if(Game.keys['left']) { this.x -= 100 * dt; }
   if(Game.keys['right']) { this.x += 100 * dt; }
 
-  if(this.x < 10) this.x = 10;
-  if(this.x > 470) this.x = 470;
+  if(this.x < 0) this.x = 0;
+  if(this.x > Game.width-this.w) this.x = Game.width-this.w;
 
   this.reloading--;
 
-  if(Game.keys['fire'] && this.reloading <= 0 && GameBoard.missles < 3) {
-    this.board.add(new Missle(this.x + this.w/2 - Sprites.map.missle.w/2,
-                             this.y-this.h,
-                             -100));
+  if(Game.keys['fire'] && this.reloading <= 0 && this.board.missles < 3) {
+    this.board.addSprite('missle',
+                          this.x + this.w/2 - Sprites.map.missle.w/2,
+                          this.y-this.h,
+                          { dy: -100, player: true });
+    this.board.missles++;
     this.reloading = 10;
   }
   return true;
 }
 
+Player.prototype.die = function() {
+  Game.loadBoard(new GameScreen("Game Over"));
+}
+
 
 var Missle = function(opts) {
    this.dy = opts.dy;
-   if(this.dy < 0) GameBoard.missles++;
+   this.player = opts.player;
 }
 
 
@@ -247,15 +232,29 @@ Missle.prototype.step = function(dt) {
    var enemy = this.board.collide(this);
    if(enemy) { 
      enemy.die();
-     if(this.dy < 0) GameBoard.missles--;
      return false;
    }
-   if(this.y < 0) {
-     if(this.dy < 0) GameBoard.missles--;
-   }
-   return this.y < 0 ? false : true;
+   return (this.y < 0 || this.y > Game.height) ? false : true;
 }
 
 Missle.prototype.die = function() {
+  if(this.player) this.board.missles--;
    this.board.remove(this);
 }
+
+
+var Sprites = new function() {
+  this.map = { }; 
+
+  this.load = function(callback) { 
+    this.image = new Image();
+    this.image.onload = callback;
+    this.image.src = 'images/sprites.png';
+  }
+
+  this.draw = function(canvas,sprite,x,y) {
+    var s = this.map[sprite];
+    canvas.drawImage(this.image, s.sx, s.sy, s.w, s.h, x,y, s.w, s.h);
+  }
+}
+
