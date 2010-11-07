@@ -17,10 +17,16 @@ var AlienFlock = function AlienFlock() {
     this.dx = this.speed * this.hit;
 
     var max = {};
+    var cnt = 0;
     this.board.iterate(function() {
-      if(this instanceof Alien) 
+      if(this instanceof Alien)  {
         if(!max[this.x] || this.y > max[this.x]) max[this.x] = this.y; 
+        cnt++;
+      } 
     });
+    if(cnt == 0) {
+      Game.loadBoard(new GameBoard(Game.board.level+1));
+    }
     this.max_y = max;
     return true;
   };
@@ -34,10 +40,11 @@ var Alien = function Alien(opts) {
 }
 
 Alien.prototype.draw = function(canvas) {
-  Sprites.draw(canvas,'alien1',this.x,this.y,this.frame);
+  Sprites.draw(canvas,this.name,this.x,this.y,this.frame);
 }
 
 Alien.prototype.die = function() {
+  GameAudio.play('die');
   this.flock.speed += 1;
   this.board.remove(this);
 }
@@ -85,6 +92,7 @@ Player.prototype.step = function(dt) {
   this.reloading--;
 
   if(Game.keys['fire'] && this.reloading <= 0 && this.board.missles < 3) {
+    GameAudio.play('fire');
     this.board.addSprite('missle',
                           this.x + this.w/2 - Sprites.map.missle.w/2,
                           this.y-this.h,
@@ -96,6 +104,7 @@ Player.prototype.step = function(dt) {
 }
 
 Player.prototype.die = function() {
+  GameAudio.play('die');
   Game.endCallback();
 }
 
@@ -122,6 +131,7 @@ Missle.prototype.step = function(dt) {
 
 Missle.prototype.die = function() {
   if(this.player) this.board.missles--;
+  if(this.board.missles < 0) this.board.missles=0;
    this.board.remove(this);
 }
 

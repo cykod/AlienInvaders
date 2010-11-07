@@ -37,7 +37,7 @@ var Sprites = new function() {
     this.map = sprite_data;
     this.image = new Image();
     this.image.onload = callback;
-    this.image.src = 'images/sprites.png';
+    this.image.src = 'images/sprites.png?1231';
   }
 
   this.draw = function(canvas,sprite,x,y,frame) {
@@ -69,7 +69,9 @@ var GameScreen = function GameScreen(text,text2,callback) {
 var GameBoard = function GameBoard(level_number) {
   this.removed_objs = [];
   this.missles = 0;
+  this.level = level_number;
   var board = this;
+  
 
   this.loadLevel = function(level) {
     this.objects = [];
@@ -129,6 +131,7 @@ var GameBoard = function GameBoard(level_number) {
 
   this.addSprite = function(name,x,y,opts) {
     var sprite = this.add(new Sprites.map[name].cls(opts));
+    sprite.name = name;
     sprite.x = x; sprite.y = y;
     sprite.w = Sprites.map[name].w; 
     sprite.h = Sprites.map[name].h;
@@ -136,5 +139,54 @@ var GameBoard = function GameBoard(level_number) {
   }
  
   this.loadLevel(Game.level_data[level_number]);
+}
+
+
+var GameAudio = new function() {
+  this.load_queue = [];
+  this.loading_sounds = 0;
+  this.sounds = {};
+
+  var channel_max = 10;		
+  audio_channels = new Array();
+  for (a=0;a<channel_max;a++) {	
+    audio_channels[a] = new Array();
+    audio_channels[a]['channel'] = new Audio(); 
+    audio_channels[a]['finished'] = -1;	
+  }
+
+  this.load = function(files,callback) {
+    var audioCallback = function() { GameAudio.finished(callback); }
+
+    for(name in files) {
+      var filename = files[name];
+      this.loading_sounds++;
+      var snd = new Audio();
+      this.sounds[name] = snd;
+      snd.addEventListener('canplaythrough',audioCallback,false);
+      snd.src = filename;
+      snd.load();
+    }
+  }
+
+  this.finished = function(callback) {
+    this.loading_sounds--;
+    if(this.loading_sounds == 0) {
+      callback();
+    }
+  }
+
+  this.play = function(s) {
+    for (a=0;a<audio_channels.length;a++) {
+      thistime = new Date();
+      if (audio_channels[a]['finished'] < thistime.getTime()) {	
+        audio_channels[a]['finished'] = thistime.getTime() + this.sounds[s].duration*1000;
+        audio_channels[a]['channel'].src = this.sounds[s].src;
+        audio_channels[a]['channel'].load();
+        audio_channels[a]['channel'].play();
+        break;
+      }
+    }
+  }
 }
 
