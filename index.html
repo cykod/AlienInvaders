@@ -5,6 +5,7 @@
   <title>Alien Invaders</title>
   <link rel='Stylesheet' href='style.css'  type='text/css'/>
   <script src='http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js'></script>
+  <script src='js/engine.js'></script>
   <script src='js/game.js'></script>
 
   <style>
@@ -48,13 +49,25 @@
     'missle': { sx: 0,  sy: 68, w: 2,  h: 17, cls: Missle }
   }
 
+  function startGame() {
+    var screen = new GameScreen("Alien Invaders","press space to start",
+                                 function() {
+                                     Game.loadBoard(new GameBoard(1));
+                                 });
+    Game.loadBoard(screen);
+    Game.loop();
+  }
+
+  function endGame() {
+    var screen = new GameScreen("Game Over","(press space to restart)",
+                                 function() {
+                                     Game.loadBoard(new GameBoard(1));
+                                 });
+    Game.loadBoard(screen);
+  }
+
   $(function() {
-    Game.setData(levelData,spriteData)
-    Game.initialize("#gameboard",function() { 
-      Game.loadBoard(new GameBoard(level)); 
-      Game.loop(); 
-     
-     });
+    Game.initialize("#gameboard", levelData, spriteData, startGame, endGame);
   });
 </script>
 </body>
