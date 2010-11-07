@@ -47,7 +47,6 @@ var Sprites = new function() {
   }
 }
 
-
 var GameScreen = function GameScreen(text,text2,callback) {
   this.step = function(dt) {
     if(Game.keys['fire'] && callback) callback();
@@ -65,14 +64,12 @@ var GameScreen = function GameScreen(text,text2,callback) {
   }
 }
 
-
 var GameBoard = function GameBoard(level_number) {
   this.removed_objs = [];
   this.missles = 0;
   this.level = level_number;
   var board = this;
   
-
   this.loadLevel = function(level) {
     this.objects = [];
     this.player = this.addSprite('player', Game.width/2, Game.height - Sprites.map['player'].h - 10);
@@ -140,7 +137,6 @@ var GameBoard = function GameBoard(level_number) {
  
   this.loadLevel(Game.level_data[level_number]);
 }
-
 
 var GameAudio = new function() {
   this.load_queue = [];
