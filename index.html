@@ -67,7 +67,6 @@
 
   $(function() {
     GameAudio.load({ 'fire' : 'media/laser.ogg', 'die' : 'media/explosion.ogg' }, function() { 
-      GameAudio.play('fire');
       Game.initialize("#gameboard", levelData, spriteData, startGame, endGame);
     });
   });
