@@ -23,7 +23,13 @@ var AlienFlock = function AlienFlock() {
         cnt++;
       } 
     });
-    if(cnt == 0) { Game.loadBoard(new GameBoard(Game.board.level+1)); }
+    if(cnt == 0) { 
+      if(Game.board.nextLevel()) {
+        Game.loadBoard(new GameBoard(Game.board.nextLevel())); 
+      } else {
+        Game.callbacks['win']();
+      }
+    }
     this.max_y = max;
     return true;
   };
@@ -56,8 +62,8 @@ Alien.prototype.step = function(dt) {
     this.x += this.mx;
     this.mx = 0;
     this.frame = (this.frame+1) % 2;
-    if(this.x > 450) this.flock.hit = -1;
-    if(this.x < 10) this.flock.hit = 1;
+    if(this.x > Game.width - Sprites.map.alien1.w * 2) this.flock.hit = -1;
+    if(this.x < Sprites.map.alien1.w) this.flock.hit = 1;
   }
   return true;
 }
@@ -101,7 +107,7 @@ Player.prototype.step = function(dt) {
 
 Player.prototype.die = function() {
   GameAudio.play('die');
-  Game.endCallback();
+  Game.callbacks['die']();
 }
 
 var Missle = function Missle(opts) {

@@ -1,8 +1,8 @@
-var Game = new function() {
+var Game = new function() {                                                                  
   var KEY_CODES = { 37:'left', 39:'right', 32 :'fire' };
   this.keys = {};
 
-  this.initialize = function(canvas_dom,level_data,sprite_data,callback,endCallback) {
+  this.initialize = function(canvas_dom,level_data,sprite_data,callbacks) {
     this.canvas_elem = $(canvas_dom)[0];
     this.canvas = this.canvas_elem.getContext('2d');
     this.width = $(this.canvas_elem).attr('width');
@@ -17,8 +17,8 @@ var Game = new function() {
     });
 
     this.level_data = level_data;
-    this.endCallback = endCallback;
-    Sprites.load(sprite_data,callback);
+    this.callbacks = callbacks;
+    Sprites.load(sprite_data,this.callbacks['start']);
   }
 
   this.loadBoard = function(board) { Game.board = board; }
@@ -37,7 +37,7 @@ var Sprites = new function() {
     this.map = sprite_data;
     this.image = new Image();
     this.image.onload = callback;
-    this.image.src = 'images/sprites.png?1231';
+    this.image.src = 'images/sprites.png';
   }
 
   this.draw = function(canvas,sprite,x,y,frame) {
@@ -69,18 +69,19 @@ var GameBoard = function GameBoard(level_number) {
   this.missles = 0;
   this.level = level_number;
   var board = this;
-  
-  this.loadLevel = function(level) {
-    this.objects = [];
-    this.player = this.addSprite('player', Game.width/2, Game.height - Sprites.map['player'].h - 10);
-    var flock = this.add(new AlienFlock());
-    for(var y=0,rows=level.length;y<rows;y++) {
-      for(var x=0,cols=level[y].length;x<cols;x++) {
-        var alien = Sprites.map['alien' + level[y][x]];
-        if(alien) this.addSprite('alien' + level[y][x],(alien.w+10)*x, alien.h*y, { flock: flock });
-      }
-    }
+
+  this.add =    function(obj) { obj.board=this; this.objects.push(obj); return obj; }
+  this.remove = function(obj) { this.removed_objs.push(obj); }
+
+  this.addSprite = function(name,x,y,opts) {
+    var sprite = this.add(new Sprites.map[name].cls(opts));
+    sprite.name = name;
+    sprite.x = x; sprite.y = y;
+    sprite.w = Sprites.map[name].w; 
+    sprite.h = Sprites.map[name].h;
+    return sprite;
   }
+  
 
   this.iterate = function(func) {
      for(var i=0,len=this.objects.length;i<len;i++) {
@@ -113,7 +114,8 @@ var GameBoard = function GameBoard(level_number) {
   }
 
   this.collision = function(o1,o2) {
-    return !((o1.y+o1.h-1<o2.y) || (o1.y> o2.y+o2.h-1) || (o1.x+o1.w-1<o2.x) || (o1.x>o2.x+o2.w-1));
+    return !((o1.y+o1.h-1<o2.y) || (o1.y> o2.y+o2.h-1) ||
+             (o1.x+o1.w-1<o2.x) || (o1.x>o2.x+o2.w-1));
   };
 
   this.collide = function(obj) {
@@ -123,16 +125,28 @@ var GameBoard = function GameBoard(level_number) {
     });
   }
 
-  this.add =    function(obj) { obj.board=this; this.objects.push(obj); return obj; }
-  this.remove = function(obj) { this.removed_objs.push(obj); }
+  this.loadLevel = function(level) {
+    this.objects = [];
+    this.player = this.addSprite('player', // Sprite
+                                 Game.width/2, // X
+                                 Game.height - Sprites.map['player'].h - 10); // Y
 
-  this.addSprite = function(name,x,y,opts) {
-    var sprite = this.add(new Sprites.map[name].cls(opts));
-    sprite.name = name;
-    sprite.x = x; sprite.y = y;
-    sprite.w = Sprites.map[name].w; 
-    sprite.h = Sprites.map[name].h;
-    return sprite;
+    var flock = this.add(new AlienFlock());
+    for(var y=0,rows=level.length;y<rows;y++) {
+      for(var x=0,cols=level[y].length;x<cols;x++) {
+        var alien = Sprites.map['alien' + level[y][x]];
+        if(alien) { 
+          this.addSprite('alien' + level[y][x], // Which Sprite
+                         (alien.w+10)*x,  // X
+                         alien.h*y,       // Y
+                         { flock: flock }); // Options
+        }
+      }
+    }
+  }
+
+  this.nextLevel = function() { 
+    return Game.level_data[level_number + 1] ? (level_number + 1) : false 
   }
  
   this.loadLevel(Game.level_data[level_number]);
