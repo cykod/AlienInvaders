@@ -66,7 +66,7 @@ var GameScreen = function GameScreen(text,text2,callback) {
 
 var GameBoard = function GameBoard(level_number) {
   this.removed_objs = [];
-  this.missles = 0;
+  this.missiles = 0;
   this.level = level_number;
   var board = this;
 
@@ -114,7 +114,7 @@ var GameBoard = function GameBoard(level_number) {
   }
 
   this.collision = function(o1,o2) {
-    return !((o1.y+o1.h-1<o2.y) || (o1.y> o2.y+o2.h-1) ||
+    return !((o1.y+o1.h-1<o2.y) || (o1.y>o2.y+o2.h-1) ||
              (o1.x+o1.w-1<o2.x) || (o1.x>o2.x+o2.w-1));
   };
 
