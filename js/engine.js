@@ -19,15 +19,15 @@ var Game = new function() {
     this.level_data = level_data;
     this.callbacks = callbacks;
     Sprites.load(sprite_data,this.callbacks['start']);
-  }
+  };
 
-  this.loadBoard = function(board) { Game.board = board; }
+  this.loadBoard = function(board) { Game.board = board; };
 
   this.loop = function() { 
     Game.board.step(30/1000); 
     Game.board.render(Game.canvas);
     setTimeout(Game.loop,30);
-  }
+  };
 };
 
 var Sprites = new function() {
@@ -38,19 +38,19 @@ var Sprites = new function() {
     this.image = new Image();
     this.image.onload = callback;
     this.image.src = 'images/sprites.png';
-  }
+  };
 
   this.draw = function(canvas,sprite,x,y,frame) {
     var s = this.map[sprite];
     if(!frame) frame = 0;
     canvas.drawImage(this.image, s.sx + frame * s.w, s.sy, s.w, s.h, x,y, s.w, s.h);
-  }
+  };
 }
 
 var GameScreen = function GameScreen(text,text2,callback) {
   this.step = function(dt) {
     if(Game.keys['fire'] && callback) callback();
-  }
+  };
 
   this.render = function(canvas) {
     canvas.clearRect(0,0,Game.width,Game.height);
@@ -61,8 +61,8 @@ var GameScreen = function GameScreen(text,text2,callback) {
     canvas.font = "bold 20px arial";
     var measure2 = canvas.measureText(text2);
     canvas.fillText(text2,Game.width/2 - measure2.width/2,Game.height/2 + 40);
-  }
-}
+  };
+};
 
 var GameBoard = function GameBoard(level_number) {
   this.removed_objs = [];
@@ -70,8 +70,8 @@ var GameBoard = function GameBoard(level_number) {
   this.level = level_number;
   var board = this;
 
-  this.add =    function(obj) { obj.board=this; this.objects.push(obj); return obj; }
-  this.remove = function(obj) { this.removed_objs.push(obj); }
+  this.add =    function(obj) { obj.board=this; this.objects.push(obj); return obj; };
+  this.remove = function(obj) { this.removed_objs.push(obj); };
 
   this.addSprite = function(name,x,y,opts) {
     var sprite = this.add(new Sprites.map[name].cls(opts));
@@ -80,21 +80,21 @@ var GameBoard = function GameBoard(level_number) {
     sprite.w = Sprites.map[name].w; 
     sprite.h = Sprites.map[name].h;
     return sprite;
-  }
+  };
   
 
   this.iterate = function(func) {
      for(var i=0,len=this.objects.length;i<len;i++) {
        func.call(this.objects[i]);
      }
-  }
+  };
 
   this.detect = function(func) {
     for(var i = 0,val=null, len=this.objects.length; i < len; i++) {
       if(func.call(this.objects[i])) return this.objects[i];
     }
     return false;
-  }
+  };
 
   this.step = function(dt) { 
     this.removed_objs = [];
@@ -111,7 +111,7 @@ var GameBoard = function GameBoard(level_number) {
   this.render = function(canvas) {
     canvas.clearRect(0,0,Game.width,Game.height);
     this.iterate(function() { this.draw(canvas); });
-  }
+  };
 
   this.collision = function(o1,o2) {
     return !((o1.y+o1.h-1<o2.y) || (o1.y>o2.y+o2.h-1) ||
@@ -123,7 +123,7 @@ var GameBoard = function GameBoard(level_number) {
       if(obj != this && !this.invulnrable)
        return board.collision(obj,this) ? this : false;
     });
-  }
+  };
 
   this.loadLevel = function(level) {
     this.objects = [];
@@ -143,14 +143,14 @@ var GameBoard = function GameBoard(level_number) {
         }
       }
     }
-  }
+  };
 
   this.nextLevel = function() { 
     return Game.level_data[level_number + 1] ? (level_number + 1) : false 
-  }
+  };
  
   this.loadLevel(Game.level_data[level_number]);
-}
+};
 
 var GameAudio = new function() {
   this.load_queue = [];
@@ -177,14 +177,14 @@ var GameAudio = new function() {
       snd.src = filename;
       snd.load();
     }
-  }
+  };
 
   this.finished = function(callback) {
     this.loading_sounds--;
     if(this.loading_sounds == 0) {
       callback();
     }
-  }
+  };
 
   this.play = function(s) {
     for (a=0;a<audio_channels.length;a++) {
@@ -197,6 +197,6 @@ var GameAudio = new function() {
         break;
       }
     }
-  }
-}
+  };
+};
 

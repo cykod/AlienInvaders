@@ -57,10 +57,14 @@
   }
 
   $(function() {
-    GameAudio.load({ 'fire' : 'media/laser.ogg', 'die' : 'media/explosion.ogg' }, function() { 
-      Game.initialize("#gameboard", levelData, spriteData,
-         { "start": startGame,
-           "die"  : endGame,
-           "win"  : winGame });
-    });
-  });
+    GameAudio.load({ 'fire' : 'media/laser.ogg', 'die' : 'media/explosion.ogg' }, 
+                   function() { 
+                       Game.initialize("#gameboard", levelData, spriteData,
+                                      { "start": startGame,
+                                        "die"  : endGame,
+                                        "win"  : winGame });
+                   });
+   });
+
+
+
